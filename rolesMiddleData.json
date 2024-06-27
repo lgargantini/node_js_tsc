@@ -1,0 +1,22 @@
+[
+    {
+        "role": "admin",
+        "description": "This role is allowed to use all endpoints",
+        "permissions": [
+            {
+                "resource": "users",
+                "methods": ["GET", "POST", "PUT", "DELETE"]
+            }
+        ]
+    },
+    {
+        "role": "user",
+        "description": "This role is allowed to use all endpoints",
+        "permissions": [
+            {
+                "resource":"users",
+                "methods": ["GET", "POST"]
+            }
+        ]
+    }
+]
