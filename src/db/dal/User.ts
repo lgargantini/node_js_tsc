@@ -1,5 +1,5 @@
 import User, { UserInput, UserOuput } from '../models/User'
-import { ServiceException } from '../../utils/types/exception';
+import { ServiceException, ValidationException } from '../../utils/types/exception';
 import { HTTP_STATUS_ERROR_CODES } from '../../utils/constants';
 
 export const create = async (payload: UserInput): Promise<UserOuput> => {
@@ -16,17 +16,21 @@ export const update = async (id: string, payload: Partial<UserInput>): Promise<U
 }
 
 export const getById = async (id: string): Promise<UserOuput> => {
-    const user = await User.findByPk(id)
-    if (!user) {
-        throw new ServiceException("DBError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
+    try{
+        const user = await User.findByPk(id)
+        if (!user) {
+            throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
+        }
+        return user
+    }catch(error){
+        throw new ServiceException("DBError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST,"error fetching by id", error)
     }
-    return user
 }
 
 export const getByEmail = async (email: string): Promise<UserOuput> => {
     const user = await User.findOne({where: {'email': email}})
     if (!user) {
-        throw new ServiceException("DBError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found");
+        throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
     }
     return user
 }

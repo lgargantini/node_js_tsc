@@ -1,4 +1,5 @@
 import Joi from "joi";
+import { PASSWORD_REGEX } from "../../utils/constants";
 
 export const userSchema = Joi.object({
   id: Joi.string().guid({ version: 'uuidv4' })
@@ -9,9 +10,21 @@ export const userSchema = Joi.object({
     'string.required':'Email must be valid'
   }),
   name: Joi.string().required(),
-  password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required(),
+  password: Joi.string().pattern(new RegExp(PASSWORD_REGEX)).required(),
   role: Joi.string().valid("USER", "ADMIN"),
 });
+
+export const userAuthSchema = Joi.string().guid({ version: 'uuidv4' })
+  .messages({
+    'string.required':'ID must be a UUID'
+  });
+
+export const loginSchema = Joi.object({
+  email: Joi.string().email().required().messages({
+    'string.required':'Email must be valid'
+  }),
+  password: Joi.string().pattern(new RegExp(PASSWORD_REGEX)).required(),
+})
 
 export const tokenSchema = Joi.object(({
   id: Joi.number(),
@@ -31,7 +44,7 @@ export const userEmail = Joi.object({
 
 export const resetTokenSchema = Joi.object({
   reset_token: Joi.string().required(),
-  password: Joi.string().pattern(new RegExp('^[a-zA-Z0-9]{3,30}$')).required()
+  password: Joi.string().pattern(new RegExp(PASSWORD_REGEX)).required()
 });
 
 

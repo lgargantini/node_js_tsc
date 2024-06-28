@@ -11,7 +11,7 @@ export async function middlewareAuthorization(
   next: express.NextFunction,
 ) {
   logger.info(
-    `authorizeServiceTokenOrUserClaim: checking for either a service token or user claims = ${req.headers}`,
+    `authorizeServiceTokenOrUserClaim: checking for either a service token or user claims`,
   );
   // check for a user claim. If so, it is ok to proceed.
   if (req.headers["user-id"]) {

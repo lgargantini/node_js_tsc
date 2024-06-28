@@ -9,16 +9,17 @@ import UserController from "../../db/dal/User";
 import { IRole, UserInput, UserOuput } from "../../db/models/User";
 import { generateBcryptSafePassword, generateJWTToken, generateResetTokenInfo, ResetTokenInfo, validateBcryptPassword } from "../../utils";
 import { HEADER_USER_ID, HTTP_STATUS_ERROR_CODES } from "../../utils/constants";
-import { resetTokenSchema, userEmail, userSchema } from "../../db/validators";
+import { loginSchema, resetTokenSchema, userAuthSchema, userEmail, userSchema } from "../../db/validators";
 import { AuthorizationException, BaseException, ValidationException } from "../../utils/types/exception";
 import { handleError } from "../../utils/errorHandling";
 
 export const authorizeUser = (requiredRole: IRole) => async (
   req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if(!req.headers[HEADER_USER_ID]){
+  try {
+    const isValid = userAuthSchema.validate(req.headers[HEADER_USER_ID]);
+    if(isValid.error){
       throw new AuthorizationException("InvalidCredentials", "User id must be provided")
     }
-  try {
     const user = await UserController.getById(String(req.headers[HEADER_USER_ID]));
     if (requiredRole !== (user as UserOuput).role && (user as UserOuput).role !== IRole.ADMIN) {
       throw new AuthorizationException("InvalidCredentials", "Invalid credentials", user)
@@ -39,7 +40,7 @@ export const authorizeUser = (requiredRole: IRole) => async (
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error);
     handleError(baseException, res)
   }
 };
@@ -73,13 +74,17 @@ usersRouter.get("/", authorizeUser(IRole.ADMIN), async (req: Request, res: Respo
 // Get user by id //ADMIN ONLY
 usersRouter.get("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
   try{
-  const user = await UserController.getById(req.params.id);
-  res.status(HTTP_STATUS_ERROR_CODES.OK).send(user);
+    const isValid = userAuthSchema.validate(req.params.id);
+    if(isValid.error){
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST,"valid User id must be provided", isValid.error)
+    }
+    const user = await UserController.getById(req.params.id);
+    res.status(HTTP_STATUS_ERROR_CODES.OK).send(user);
   }catch(error){
     logger.error(error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "get user by id: ",
       data: error
     }
@@ -89,7 +94,7 @@ usersRouter.get("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Re
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });
@@ -117,7 +122,7 @@ usersRouter.post("/", authorizeUser(IRole.ADMIN) , async (req: Request, res: Res
     logger.error(error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "post user: ",
       data: error
     }
@@ -127,7 +132,7 @@ usersRouter.post("/", authorizeUser(IRole.ADMIN) , async (req: Request, res: Res
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });
@@ -139,7 +144,7 @@ usersRouter.post("/register", async(req: Request, res: Response): Promise<void> 
       throw new ValidationException(
         "ValidationError",
         HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-        "error validation: check your body",
+        "invalid body",
         isValid.error
       );
     }
@@ -150,7 +155,7 @@ usersRouter.post("/register", async(req: Request, res: Response): Promise<void> 
       throw new ValidationException(
         "ValidationError",
         HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-        "user validation failed: user exists"
+        "email not available"
       );
     }
     // Create a new user
@@ -178,7 +183,8 @@ usersRouter.post("/register", async(req: Request, res: Response): Promise<void> 
 usersRouter.post("/login", async(req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
-    if(!email && !password){
+    const isValid = loginSchema.validate(req.body);
+    if(isValid.error){
       throw new ValidationException(
         "ValidationError",
         HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -187,25 +193,26 @@ usersRouter.post("/login", async(req: Request, res: Response): Promise<void> => 
     }
     // Check if the user exists
     const user = await UserController.getByEmail(email);
-    // Validate the password
-    const isPasswordValid = await validateBcryptPassword(password, user.password);
-    if (!isPasswordValid) {
-      throw new ValidationException(
-        "ValidationError",
-        HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-        'Invalid email or password',
-        isPasswordValid
-      );
-    }
-    // Generate a JWT token
-    const token = generateJWTToken((user as UserOuput).id);
-
-    res.status(HTTP_STATUS_ERROR_CODES.OK).json({ token });
+      // Validate the password
+      const isPasswordValid = await validateBcryptPassword(password, user.password);
+      if (!isPasswordValid) {
+        throw new ValidationException(
+          "ValidationError",
+          HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+          'Invalid email or password',
+          isPasswordValid
+        );
+      }
+      // Generate a JWT token
+      const token = generateJWTToken((user as UserOuput).id);
+  
+      res.status(HTTP_STATUS_ERROR_CODES.OK).json({ token });
+    
   } catch (error) {
     logger.error('Error logging in:', error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "login user: ",
       data: error
     }
@@ -215,7 +222,7 @@ usersRouter.post("/login", async(req: Request, res: Response): Promise<void> => 
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });
@@ -223,7 +230,7 @@ usersRouter.post("/login", async(req: Request, res: Response): Promise<void> => 
 usersRouter.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
-    const isValid = userEmail.validate(email)
+    const isValid = userEmail.validate(req.body)
     if(isValid.error){
       throw new ValidationException(
         "ValidationError",
@@ -249,7 +256,7 @@ usersRouter.post('/forgot-password', async (req, res) => {
     logger.error('Error generating reset token:', error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "get user: ",
       data: error
     }
@@ -259,7 +266,7 @@ usersRouter.post('/forgot-password', async (req, res) => {
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });
@@ -300,7 +307,7 @@ usersRouter.post('/reset-password', async (req, res) => {
     logger.error('Error resetting password:', error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "reset user: ",
       data: error
     }
@@ -310,7 +317,7 @@ usersRouter.post('/reset-password', async (req, res) => {
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });
@@ -325,7 +332,7 @@ usersRouter.put("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Re
     logger.error("Error updating user", error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "put user: ",
       data: error
     }
@@ -335,7 +342,7 @@ usersRouter.put("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Re
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });
@@ -349,7 +356,7 @@ usersRouter.delete("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res:
     logger.error("Error deleting user", error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-      type: "Unhandled Error",
+      type: "UnhandledError",
       message: "delete user: ",
       data: error
     }
@@ -359,7 +366,7 @@ usersRouter.delete("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res:
       defaultError.type,
       defaultError.message,
       defaultError.data
-    )
+    ).captureError(error)
     handleError(baseException, res)
   }
 });

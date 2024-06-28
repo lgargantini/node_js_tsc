@@ -2,6 +2,13 @@
 
 import { HTTP_STATUS_ERROR_CODES } from "../constants";
 
+export enum errorName {
+  ServiceException = "ServiceException",
+  AuthenticationException = "AuthenticationException",
+  ValidationException = "ValidationException",
+  GeneralException = "GeneralException"
+} 
+
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type ServiceErrorType =
   | "DBError";
@@ -14,11 +21,9 @@ export type ValidationErrorType =
   | "EmailDoesntMatch"
   | "ValidationError";
 
-
-export interface IBaseExceptionInput {
-  name?: string,
-
-}
+export type GeneralErrorType = 
+| "UnhandledError"
+| "InternalServerError";
 
 export class BaseException {
   name?: string;
@@ -34,6 +39,7 @@ export class BaseException {
     if (data) {
       this.data = data;
     }
+    this.name = errorName.GeneralException
   }
 
   public toJSON() {
@@ -45,6 +51,19 @@ export class BaseException {
       data: this.data,
     }
   }
+
+  public captureError(error: any): BaseException {
+    try{
+      this.http_status = error.http_status;
+      this.type = error.type;
+      this.name = error.name;
+      this.message = error.message;
+      this.data = error.data;
+      return this
+    }catch(e){
+      throw new BaseException(HTTP_STATUS_ERROR_CODES.INTERNAL_SERVER_ERROR, "InternalServerError", "error when parsing", error);
+    }
+  }
 }
 
 export class ServiceException extends BaseException {
@@ -54,8 +73,8 @@ export class ServiceException extends BaseException {
     message: string,
     data?: any,
   ) {
-    super(http_status, message, data, type);
-    this.name = "ServiceException";
+    super(http_status, type, message, data);
+    this.name = errorName.ServiceException;
   }
 
   override toJSON():
@@ -68,12 +87,6 @@ export class ServiceException extends BaseException {
 
   } {
 
-    if(this.name){
-      this.message = `[${this.name}]`.concat(this.message)
-    }
-    if(this.type){
-      this.message = `[${this.type}]`.concat(this.message)
-    }
       return {
         status: this.http_status,
         message: this.message,
@@ -89,9 +102,8 @@ export class ServiceException extends BaseException {
 export class AuthorizationException extends BaseException {
 
   constructor(type: AuthenticationErrorType, message: string, data?: any) {
-    super(HTTP_STATUS_ERROR_CODES.UNAUTHORIZED, message, data);
-    this.name = "AuthorizationException";
-    this.type = type;
+    super(HTTP_STATUS_ERROR_CODES.UNAUTHORIZED, type, message, data);
+    this.name = errorName.AuthenticationException;
   }
 
   override toJSON(): {
@@ -101,13 +113,6 @@ export class AuthorizationException extends BaseException {
     message: string;
     data: any;
   } {
-    if(this.name){
-      this.message = `[${this.name}]`.concat(this.message)
-    }
-    if(this.type){
-      this.message = `[${this.type}]`.concat(this.message)
-    }
-
     return {
       status: this.http_status,
       type: this.type,
@@ -126,19 +131,11 @@ export class ValidationException extends BaseException {
     message: string,
     data?: any,
   ) {
-    super(http_status, message, data);
-    this.name = "ValidationException";
-    this.type = type;
+    super(http_status, type, message, data);
+    this.name = errorName.ValidationException;
   }
 
   override toJSON(): { status: number; type: string; name: string | undefined; message: string; data: any; } {
-    if(this.name){
-      this.message = `[${this.name}]`.concat(this.message)
-    }
-    if(this.type){
-      this.message = `[${this.type}]`.concat(this.message)
-    }
-
     return {
       status: this.http_status,
       type: this.type,
