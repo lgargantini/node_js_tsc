@@ -3,6 +3,7 @@ import { Op } from "sequelize";
 import Token, {TokenInput, TokenOutput} from '../models/Token'
 import { ServiceException } from "../../utils/types/exception";
 import { HTTP_STATUS_ERROR_CODES } from "../../utils/constants";
+import { UUID } from "crypto";
 
 export const getTokenByResetTokenInformation = async (reset_token: string, tokenExpiration: number): Promise<TokenOutput> => {
   const token = await Token.findOne({
@@ -38,6 +39,16 @@ export const getById = async (id: number): Promise<TokenOutput> => {
   return token
 }
 
+export const getByUserId = async (uid: UUID): Promise<TokenOutput[]> => {
+  const token = await Token.findAll({where: {
+    user_id: uid
+  }})
+  if (!token) {
+      throw new ServiceException("DBError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"token not found")
+  }
+  return token
+}
+
 export const deleteById = async (id: number): Promise<boolean> => {
   await getById(id);
   try{
@@ -48,8 +59,20 @@ export const deleteById = async (id: number): Promise<boolean> => {
   }
 }
 
+export const deleteByUserID = async (uid: UUID): Promise<boolean> => {
+  await getByUserId(uid);
+  try{
+    const token = await Token.destroy({where: {user_id: uid}})
+    return !!token
+  }catch(error){
+    throw new ServiceException("DBError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "Error when deleting token");
+  }
+}
+
 export default {
   create,
   getTokenByResetTokenInformation,
+  getByUserId,
   deleteById,
+  deleteByUserID,
 }

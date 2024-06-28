@@ -34,7 +34,7 @@ export const generateResetTokenInfo = (): ResetTokenInfo => {
   const randomValues = crypto.getRandomValues(new Uint8Array(32));
     return {
       resetToken:Array.from(randomValues, byte => byte.toString(16).padStart(2, '0')).join(''),
-      resetTokenExpiration: Date.now() + 3600000
+      resetTokenExpiration: Number(Date.now() + 3600000)
     }
 }
 

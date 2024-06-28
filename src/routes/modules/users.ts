@@ -250,7 +250,7 @@ usersRouter.post('/forgot-password', async (req, res) => {
     }
     await TokenController.create(tokenPayload)
 
-    res.status(HTTP_STATUS_ERROR_CODES.OK).json({ message: 'Password reset token sent' });
+    res.status(HTTP_STATUS_ERROR_CODES.OK).json(tokenPayload);
 
   } catch (error) {
     logger.error('Error generating reset token:', error);
@@ -300,7 +300,7 @@ usersRouter.post('/reset-password', async (req, res) => {
     // Update the user's password and reset token fields
     user.password = await generateBcryptSafePassword(password);
     await UserController.update(user.id, user);
-    await TokenController.deleteById(token.id);
+    await TokenController.deleteByUserID(user.id);
 
     res.status(HTTP_STATUS_ERROR_CODES.OK).json({ message: 'Password reset successful' });
   } catch (error) {
