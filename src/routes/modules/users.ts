@@ -159,7 +159,7 @@ usersRouter.post("/register", async(req: Request, res: Response): Promise<void> 
       );
     }
     // Create a new user
-    const user = await UserController.create({...req.body, password: generateBcryptSafePassword(password)});
+    const user = await UserController.create({...req.body, password: await generateBcryptSafePassword(password)});
     res.status(HTTP_STATUS_ERROR_CODES.CREATED).json(user);
     } catch (error) {
       logger.error('Error registering user:', error);
@@ -193,6 +193,9 @@ usersRouter.post("/login", async(req: Request, res: Response): Promise<void> => 
     }
     // Check if the user exists
     const user = await UserController.getByEmail(email);
+    if(!user){
+      throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
+    }
       // Validate the password
       const isPasswordValid = await validateBcryptPassword(password, user.password);
       if (!isPasswordValid) {
@@ -241,6 +244,9 @@ usersRouter.post('/forgot-password', async (req, res) => {
     }
     // Check if the user exists
     const user = await UserController.getByEmail(email);
+    if(!user){
+      throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
+    }
     // Generate a reset token
     const resetToken: ResetTokenInfo = generateResetTokenInfo()
     const tokenPayload = {

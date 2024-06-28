@@ -1,10 +1,10 @@
-import User, { UserInput, UserOuput } from '../models/User'
+import User, { IRole, UserInput, UserOuput } from '../models/User'
 import { ServiceException, ValidationException } from '../../utils/types/exception';
 import { HTTP_STATUS_ERROR_CODES } from '../../utils/constants';
 
 export const create = async (payload: UserInput): Promise<UserOuput> => {
     try{
-        return await User.create(payload)
+        return await User.create({role: IRole.USER, ...payload})
     }catch(error){
         throw new ServiceException("DBError", 400, (error as Error).message ? (error as Error).message : "Error when creating user");
     }
@@ -27,12 +27,8 @@ export const getById = async (id: string): Promise<UserOuput> => {
     }
 }
 
-export const getByEmail = async (email: string): Promise<UserOuput> => {
-    const user = await User.findOne({where: {'email': email}})
-    if (!user) {
-        throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
-    }
-    return user
+export const getByEmail = async (email: string): Promise<UserOuput | null> => {
+    return await User.findOne({where: {'email': email}})
 }
 
 
