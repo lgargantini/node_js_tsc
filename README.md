@@ -55,29 +55,17 @@ DB_PASSWORD='<database_password>'
 ### Linter
 
 ```
-    "linter": "eslint ./src --fix",
+    npm run linter
 ```
 
 ### Testing
 
 ```
-    "test": "jest --verbose --forceExit --detectOpenHandles",
+    "npm run test
 ```
 
 ### Test debug
 
 ```
-    "debug-test": "mocha --inspect-brk --recursive",
-```
-
-### Type checking
-
-```
-    "type-check": "tsc --noEmit", watch-dev-success\"",
-```
-
-### Linter + Running
-
-```
-    "watch-dev-success": "npm run lint && node ./bin/www.js"
+    npm run debug-test
 ```

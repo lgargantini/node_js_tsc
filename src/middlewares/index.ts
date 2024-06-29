@@ -13,15 +13,6 @@ export async function middlewareAuthorization(
   logger.info(
     `authorizeServiceTokenOrUserClaim: checking for either a service token or user claims`,
   );
-  // check for a user claim. If so, it is ok to proceed.
-  if (!req.headers["authorization"]) {
-    const errorMsg = "No authorization header or user claim provided";
-    logger.error(errorMsg);
-    res.set("WWW-Authenticate", "Service Token=Authorization Required");
-    return res.status(HTTP_STATUS_ERROR_CODES.NOT_ALLOWED).send({ message: errorMsg });
-  }else{
-    next();
-  }
 
   if (req.headers["user-id"]) {
     next();

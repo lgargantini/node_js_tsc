@@ -49,8 +49,6 @@ export const getAll = async (): Promise<UserOuput[]|Error> => {
     }
 }
 
-
-
 export default {
     create,
     getAll,

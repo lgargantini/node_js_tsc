@@ -2,13 +2,10 @@
 import express from "express";
 const router = express.Router();
 
-// Import the route handlers
 import {usersRouter} from "./modules/users";
 import { middlewareAuthorization } from "../middlewares";
 
-
-
-// Route Handlers for all the APIs
+// Route Handlers - all modules
 router.use("/users", middlewareAuthorization, usersRouter);
 
 export { router };

@@ -86,16 +86,14 @@ export class ServiceException extends BaseException {
     data: any;
 
   } {
-
       return {
-        status: this.http_status,
-        message: this.message,
         data: this.data,
+        message: this.message,
         name: this.name,
+        status: this.http_status,
         type: this.type,
       };
   }
-
 }
 
 // eslint-disable-next-line @typescript-eslint/explicit-function-return-type

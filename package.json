@@ -1,5 +1,5 @@
 {
-  "description": "refresh microservices concepts",
+  "description": "microservices",
   "repository": "git@github.com:lgargantini/node_js_tsc.git",
   "version": "1.0.0",
   "engines": {
@@ -11,11 +11,9 @@
     "debug-test": "mocha --inspect-brk --recursive",
     "clean": "rm -rf node_modules package-lock.json && npm install",
     "lint": "eslint ./src --fix",
-    "start": "node ./bin/www.js",
-    "test": "jest --verbose --forceExit --detectOpenHandles",
-    "type-check": "tsc --noEmit",
-    "watch-dev": "tsc-watch --onSuccess \"npm run watch-dev-success\"",
-    "watch-dev-success": "npm run lint && node ./bin/www.js"
+    "start": "node ./bin/www",
+    "test": "jest --detectOpenHandles",
+    "watch-prod": "tsc-watch --onSuccess \"npm run start\""
   },
   "dependencies": {
     "bcrypt": "^5.1.1",
@@ -23,18 +21,16 @@
     "dotenv": "^16.4.5",
     "express": "^4.17.1",
     "globals": "^15.6.0",
-    "helmet": "7.0.0",
     "http-errors": "^2.0.0",
     "joi": "^17.4.1",
-    "joi-password-complexity": "^5.1.0",
     "jsonwebtoken": "^9.0.2",
     "morgan": "^1.10.0",
     "nodemon": "^2.0.12",
     "pg": "^8.12.0",
+    "jade": "~1.11.0",
     "sequelize": "^6.37.3",
     "sequelize-typescript": "^2.1.6",
-    "winston": "^3.13.0",
-    "yamljs": "^0.3.0"
+    "winston": "^3.13.0"
   },
   "devDependencies": {
     "@eslint/js": "^9.4.0",
@@ -46,22 +42,15 @@
     "@types/morgan": "^1.9.9",
     "@types/node": "^20.2.3",
     "@types/validator": "^13.11.10",
-    "@types/yamljs": "^0.2.31",
     "eslint": "^8.4.0",
     "husky": "^8.0.1",
     "jest": "^29.4.0",
-    "jest_workaround": "0.1.13",
-    "nock": "^13.1.1",
     "node-mocks-http": "^1.10.1",
     "prettier": "^2.3.2",
     "prettier-plugin-packagejson": "^2.4.3",
-    "standard-version": "^9.3.2",
-    "string-width": "6.1.0",
-    "supports-color": "^9.0.2",
     "ts-jest": "^29.0.3",
     "ts-node": "^10.1.0",
     "tsc-watch": "6.0.4",
-    "typeconv": "2.3.0",
     "typescript": "^5.4.5",
     "typescript-eslint": "^7.13.0"
   }
