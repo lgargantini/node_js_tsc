@@ -14,11 +14,6 @@ export async function middlewareAuthorization(
     `authorizeServiceTokenOrUserClaim: checking for either a service token or user claims`,
   );
   // check for a user claim. If so, it is ok to proceed.
-  if (req.headers["user-id"]) {
-    next();
-    return;
-  }
-
   if (!req.headers["authorization"]) {
     const errorMsg = "No authorization header or user claim provided";
     logger.error(errorMsg);
@@ -27,27 +22,12 @@ export async function middlewareAuthorization(
   }else{
     next();
   }
-};
 
-// const authenticate = (
-//   req: Request,
-//   res: Response,
-//   next: NextFunction,
-// ): void => {
-//   const user = basicAuth(req);
-//   if (!user || !user.name || !user.pass) {
-//     res.set("WWW-Authenticate", "Basic realm=Authorization Required");
-//     res.sendStatus(401);
-//     return;
-//   }
-//   if (user.name === "" && user.pass === "") {
-//     next();
-//   } else {
-//     res.set("WWW-Authenticate", "Basic realm=Authorization Required");
-//     res.sendStatus(401);
-//     return;
-//   }
-// };
+  if (req.headers["user-id"]) {
+    next();
+    return;
+  }
+};
 
 export const authenticateUser = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
