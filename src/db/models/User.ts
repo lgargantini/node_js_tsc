@@ -1,6 +1,8 @@
 import { DataTypes, Model, Optional, Sequelize } from 'sequelize'
 import sequelizeConnection from '../config';
 import { UUID } from 'crypto';
+import EventType, { EventTypeInput } from './EventType';
+import Membership, { MembershipInput } from './Membership';
 
 export enum IRole {
   USER = 'USER',
@@ -15,8 +17,8 @@ interface UserAttributes {
   role?: IRole;
 
 }
-export interface UserInput extends Optional<UserAttributes, "id"> {}
-export interface UserOuput extends Required<UserAttributes> {}
+export interface UserInput extends Optional<UserAttributes, "id"> { }
+export interface UserOuput extends Required<UserAttributes> { }
 
 class User extends Model<UserAttributes, UserInput> implements UserAttributes {
   declare id: UUID
@@ -24,6 +26,16 @@ class User extends Model<UserAttributes, UserInput> implements UserAttributes {
   declare email: string
   declare password: string
   declare role: IRole
+
+  createEventType!: (eventType: EventTypeInput) => Promise<EventType>;
+  updateEventType!: (eventType: EventTypeInput) => Promise<EventType>;
+  getEventTypes!: () => Promise<EventType[]>;
+  removeEventType!: (eventType: EventType) => Promise<void>;
+
+  createMembership!: (membership: MembershipInput) => Promise<Membership>;
+  updateMembership!: (membership: MembershipInput) => Promise<Membership>;
+  getMemberships!: () => Promise<Membership[]>;
+  removeMembership!: (membership: Membership) => Promise<void>;
 }
 
 User.init({
@@ -55,9 +67,9 @@ User.init({
   }
 }, {
   sequelize: sequelizeConnection,
-  paranoid: false,
-  timestamps: false,
-  tableName: 'User'
+  paranoid: true,
+  timestamps: true,
+  tableName: 'User',
 })
 
 export default User

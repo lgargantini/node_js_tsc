@@ -25,17 +25,17 @@ export const authenticateUser = async (req: express.Request, res: express.Respon
     const token = req?.headers?.authorization?.split(' ')[1];
 
     // Verify the token
-    if(token){
+    if (token) {
       jwt.verify(token, JWT_SECRET_KEY,
         (err, decoded) => {
-        if(err){
-          throw new AuthorizationException('InvalidCredentials',"fails to verify token", err);
-        }
-        logger.info(decoded);
-        next();
-      });
-    }else{
-      throw new AuthorizationException("InvalidCredentials","token param is empty");
+          if (err) {
+            throw new AuthorizationException('InvalidCredentials', "fails to verify token", err);
+          }
+          logger.info(decoded);
+          next();
+        });
+    } else {
+      throw new AuthorizationException("InvalidCredentials", "token param is empty");
     }
   } catch (error) {
 

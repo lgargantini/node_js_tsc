@@ -9,15 +9,16 @@ import UserController from "../../db/dal/User";
 import { IRole, UserInput, UserOuput } from "../../db/models/User";
 import { generateBcryptSafePassword, generateJWTToken, generateResetTokenInfo, ResetTokenInfo, validateBcryptPassword } from "../../utils";
 import { HEADER_USER_ID, HTTP_STATUS_ERROR_CODES } from "../../utils/constants";
-import { loginSchema, resetTokenSchema, userAuthSchema, userEmail, userSchema } from "../../db/validators";
+import { loginSchema, membershipSchema, resetTokenSchema, userAuthSchema, userEmail, userSchema } from "../../db/validators";
 import { AuthorizationException, BaseException, ValidationException } from "../../utils/types/exception";
 import { handleError } from "../../utils/errorHandling";
+import { MembershipInput } from "../../db/models/Membership";
 
 export const authorizeUser = (requiredRole: IRole) => async (
   req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
     const isValid = userAuthSchema.validate(req.headers[HEADER_USER_ID]);
-    if(isValid.error){
+    if (isValid.error) {
       throw new AuthorizationException("InvalidCredentials", "User id must be provided")
     }
     const user = await UserController.getById(String(req.headers[HEADER_USER_ID]));
@@ -29,7 +30,7 @@ export const authorizeUser = (requiredRole: IRole) => async (
     logger.error('Error authorizing user:', error);
 
     const defaultError = {
-      status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      status: HTTP_STATUS_ERROR_CODES.UNAUTHORIZED,
       type: "InvalidCredentials",
       message: "Issue authenticating user",
       data: error
@@ -49,10 +50,10 @@ const usersRouter = express.Router();
 
 // Get all users
 usersRouter.get("/", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
-  try{
+  try {
     const users = await UserController.getAll();
     res.status(HTTP_STATUS_ERROR_CODES.OK).send(users);
-  }catch(error){
+  } catch (error) {
     logger.error(error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -73,14 +74,14 @@ usersRouter.get("/", authorizeUser(IRole.ADMIN), async (req: Request, res: Respo
 
 // Get user by id //ADMIN ONLY
 usersRouter.get("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
-  try{
+  try {
     const isValid = userAuthSchema.validate(req.params.id);
-    if(isValid.error){
-      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST,"valid User id must be provided", isValid.error)
+    if (isValid.error) {
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "valid User id must be provided", isValid.error)
     }
     const user = await UserController.getById(req.params.id);
     res.status(HTTP_STATUS_ERROR_CODES.OK).send(user);
-  }catch(error){
+  } catch (error) {
     logger.error(error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -100,8 +101,8 @@ usersRouter.get("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Re
 });
 
 // Create user // ADMIN ONLY
-usersRouter.post("/", authorizeUser(IRole.ADMIN) , async (req: Request, res: Response): Promise<void> => {
-  try{
+usersRouter.post("/", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
+  try {
     const isValid = userSchema.validate(req.body);
     if (isValid.error) {
       throw new ValidationException(
@@ -118,7 +119,7 @@ usersRouter.post("/", authorizeUser(IRole.ADMIN) , async (req: Request, res: Res
 
     const user = await UserController.create(userBody);
     res.status(HTTP_STATUS_ERROR_CODES.CREATED).send((user as UserOuput));
-  }catch(error){
+  } catch (error) {
     logger.error(error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -137,7 +138,7 @@ usersRouter.post("/", authorizeUser(IRole.ADMIN) , async (req: Request, res: Res
   }
 });
 
-usersRouter.post("/register", async(req: Request, res: Response): Promise<void> => {
+usersRouter.post("/register", async (req: Request, res: Response): Promise<void> => {
   try {
     const isValid = userSchema.validate(req.body);
     if (isValid.error) {
@@ -159,62 +160,62 @@ usersRouter.post("/register", async(req: Request, res: Response): Promise<void> 
       );
     }
     // Create a new user
-    const user = await UserController.create({...req.body, password: await generateBcryptSafePassword(password)});
+    const user = await UserController.create({ ...req.body, password: await generateBcryptSafePassword(password) });
     res.status(HTTP_STATUS_ERROR_CODES.CREATED).json(user);
-    } catch (error) {
-      logger.error('Error registering user:', error);
-      const defaultError = {
-        status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-        type: "DBError",
-        message: "register user: ",
-        data: error
-      }
-
-      const baseException = new BaseException(
-        defaultError.status,
-        defaultError.type,
-        defaultError.message,
-        defaultError.data
-      )
-      handleError(baseException, res)
+  } catch (error) {
+    logger.error('Error registering user:', error);
+    const defaultError = {
+      status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      type: "DBError",
+      message: "register user: ",
+      data: error
     }
+
+    const baseException = new BaseException(
+      defaultError.status,
+      defaultError.type,
+      defaultError.message,
+      defaultError.data
+    )
+    handleError(baseException, res)
+  }
 });
 
-usersRouter.post("/login", async(req: Request, res: Response): Promise<void> => {
+usersRouter.post("/login", async (req: Request, res: Response): Promise<void> => {
   try {
     const { email, password } = req.body;
     const isValid = loginSchema.validate(req.body);
-    if(isValid.error){
+    if (isValid.error) {
       throw new ValidationException(
         "ValidationError",
-        HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+        HTTP_STATUS_ERROR_CODES.UNAUTHORIZED,
         "invalid body"
       );
     }
     // Check if the user exists
     const user = await UserController.getByEmail(email);
-    if(!user){
-      throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
+    if (!user) {
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.UNAUTHORIZED, "invalid body")
     }
-      // Validate the password
-      const isPasswordValid = await validateBcryptPassword(password, user.password);
-      if (!isPasswordValid) {
-        throw new ValidationException(
-          "ValidationError",
-          HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
-          'Invalid email or password',
-          isPasswordValid
-        );
-      }
-      // Generate a JWT token
-      const token = generateJWTToken((user as UserOuput).id);
-  
-      res.status(HTTP_STATUS_ERROR_CODES.OK).json({ token });
-    
+    // Validate the password
+    const isPasswordValid = await validateBcryptPassword(password, user.password);
+    if (!isPasswordValid) {
+      throw new ValidationException(
+        "ValidationError",
+        HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+        'Invalid email or password',
+        isPasswordValid
+      );
+    }
+    // Generate a JWT token
+    const token = generateJWTToken((user as UserOuput).id);
+
+    res.status(HTTP_STATUS_ERROR_CODES.OK).json({ token });
+
   } catch (error) {
     logger.error('Error logging in:', error);
     const defaultError = {
-      status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      status: HTTP_STATUS_ERROR_CODES.UNAUTHORIZED,
       type: "UnhandledError",
       message: "login user: ",
       data: error
@@ -234,7 +235,7 @@ usersRouter.post('/forgot-password', async (req, res) => {
   try {
     const { email } = req.body;
     const isValid = userEmail.validate(req.body)
-    if(isValid.error){
+    if (isValid.error) {
       throw new ValidationException(
         "ValidationError",
         HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -244,8 +245,8 @@ usersRouter.post('/forgot-password', async (req, res) => {
     }
     // Check if the user exists
     const user = await UserController.getByEmail(email);
-    if(!user){
-      throw new ValidationException("ValidationError",HTTP_STATUS_ERROR_CODES.NOT_FOUND,"user not found")
+    if (!user) {
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, "user not found")
     }
     // Generate a reset token
     const resetToken: ResetTokenInfo = generateResetTokenInfo()
@@ -282,7 +283,7 @@ usersRouter.post('/reset-password', async (req, res) => {
   try {
     const { reset_token, password } = req.body;
     const isValid = resetTokenSchema.validate(req.body)
-    if(isValid.error){
+    if (isValid.error) {
       throw new ValidationException(
         "ValidationError",
         HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -330,11 +331,11 @@ usersRouter.post('/reset-password', async (req, res) => {
 
 // Update user
 usersRouter.put("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
-  try{
-    const newUser: UserInput = {...req.body, password: await generateBcryptSafePassword(req.body.password)}
+  try {
+    const newUser: UserInput = { ...req.body, password: await generateBcryptSafePassword(req.body.password) }
     await UserController.update(req.params.id, newUser);
     res.status(HTTP_STATUS_ERROR_CODES.UPDATED_SUCCESSFULLY).send();
-  }catch(error){
+  } catch (error) {
     logger.error("Error updating user", error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -355,15 +356,47 @@ usersRouter.put("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Re
 
 // Delete user
 usersRouter.delete("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
-  try{
+  try {
     await UserController.deleteById(req.params.id);
     res.status(HTTP_STATUS_ERROR_CODES.UPDATED_SUCCESSFULLY).send();
-  }catch(error){
+  } catch (error) {
     logger.error("Error deleting user", error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
       type: "UnhandledError",
       message: "delete user: ",
+      data: error
+    }
+
+    const baseException = new BaseException(
+      defaultError.status,
+      defaultError.type,
+      defaultError.message,
+      defaultError.data
+    ).captureError(error)
+    handleError(baseException, res)
+  }
+});
+
+usersRouter.post("/:id/membership", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const isUserValid = userAuthSchema.validate(req.params.id);
+    const isBodyValid = membershipSchema.validate(req.body);
+    if (isUserValid.error || isBodyValid.error) {
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "valid User id must be provided", isUserValid.error || isBodyValid.error)
+    }
+    //create membership
+    const membership: MembershipInput = {
+      ...req.body
+    }
+    await UserController.membership.createMembership(req.params.id, membership);
+    res.status(HTTP_STATUS_ERROR_CODES.UPDATED_SUCCESSFULLY).send();
+  } catch (error) {
+    logger.error("Error updating user", error);
+    const defaultError = {
+      status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      type: "UnhandledError",
+      message: "put user: ",
       data: error
     }
 

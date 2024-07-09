@@ -3,7 +3,7 @@ import sequelizeConnection from "../config";
 import { UUID } from "crypto";
 import User from "./User";
 
-interface TokenAttributes{
+interface TokenAttributes {
   id: number;
   user_id: UUID;
   reset_token: string;
@@ -11,8 +11,8 @@ interface TokenAttributes{
 }
 
 // export interface TokenInput
-export interface TokenInput extends Optional<TokenAttributes, 'id'>{}
-export interface TokenOutput extends Required<TokenAttributes>{}
+export interface TokenInput extends Optional<TokenAttributes, 'id'> { }
+export interface TokenOutput extends Required<TokenAttributes> { }
 
 class Token extends Model<TokenAttributes, TokenInput> implements TokenAttributes {
   declare id: number;
@@ -39,17 +39,12 @@ Token.init({
   }
 }, {
   sequelize: sequelizeConnection,
-  paranoid: false,
-  timestamps: false,
-  tableName: 'Token'
+  paranoid: true,
+  timestamps: true,
+  tableName: 'Token',
 });
 
-Token.belongsTo(User, {foreignKey: 'user_id'});
-
-// (async () => {
-//   await sequelizeConnection.sync();
-//   // Code here
-// })();
+Token.belongsTo(User, { foreignKey: 'user_id', as: 'user' });
 
 export default Token;
 

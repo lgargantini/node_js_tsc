@@ -4,14 +4,14 @@ import { HTTP_STATUS_ERROR_CODES, JWT_SECRET_KEY } from "./constants";
 import crypto from "crypto";
 import { ValidationException } from "./types/exception";
 
-export interface ResetTokenInfo{
+export interface ResetTokenInfo {
   resetToken: string,
   resetTokenExpiration: number
 }
 
 export const generateBcryptSafePassword = async (password: string): Promise<string> => {
   //  Encrypt and hash the password
-  if(!password){
+  if (!password) {
     throw new ValidationException(
       "ValidationError",
       HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
@@ -32,10 +32,10 @@ export const generateJWTToken = (id: string): string => {
 
 export const generateResetTokenInfo = (): ResetTokenInfo => {
   const randomValues = crypto.getRandomValues(new Uint8Array(32));
-    return {
-      resetToken:Array.from(randomValues, byte => byte.toString(16).padStart(2, '0')).join(''),
-      resetTokenExpiration: Number(Date.now() + 3600000)
-    }
+  return {
+    resetToken: Array.from(randomValues, byte => byte.toString(16).padStart(2, '0')).join(''),
+    resetTokenExpiration: Number(Date.now() + 3600000)
+  }
 }
 
 export default {

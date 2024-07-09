@@ -7,7 +7,7 @@ export enum errorName {
   AuthenticationException = "AuthenticationException",
   ValidationException = "ValidationException",
   GeneralException = "GeneralException"
-} 
+}
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
 export type ServiceErrorType =
@@ -21,9 +21,9 @@ export type ValidationErrorType =
   | "EmailDoesntMatch"
   | "ValidationError";
 
-export type GeneralErrorType = 
-| "UnhandledError"
-| "InternalServerError";
+export type GeneralErrorType =
+  | "UnhandledError"
+  | "InternalServerError";
 
 export class BaseException {
   name?: string;
@@ -53,14 +53,14 @@ export class BaseException {
   }
 
   public captureError(error: any): BaseException {
-    try{
+    try {
       this.http_status = error.http_status;
       this.type = error.type;
       this.name = error.name;
       this.message = error.message;
       this.data = error.data;
       return this
-    }catch(e){
+    } catch (e) {
       throw new BaseException(HTTP_STATUS_ERROR_CODES.INTERNAL_SERVER_ERROR, "InternalServerError", "error when parsing", error);
     }
   }
@@ -77,8 +77,7 @@ export class ServiceException extends BaseException {
     this.name = errorName.ServiceException;
   }
 
-  override toJSON():
-  {
+  override toJSON(): {
     status: number;
     type: string;
     name: string | undefined;
@@ -86,13 +85,13 @@ export class ServiceException extends BaseException {
     data: any;
 
   } {
-      return {
-        data: this.data,
-        message: this.message,
-        name: this.name,
-        status: this.http_status,
-        type: this.type,
-      };
+    return {
+      data: this.data,
+      message: this.message,
+      name: this.name,
+      status: this.http_status,
+      type: this.type,
+    };
   }
 }
 
