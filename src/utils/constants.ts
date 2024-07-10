@@ -3,7 +3,7 @@ export const HEADER_USER_ID = 'user-id';
 export const JWT_SECRET_KEY = 'secretKey';
 
 //http error codes
-export enum HTTP_STATUS_ERROR_CODES {
+export enum HTTP_STATUS_CODES {
   OK = 200,
   CREATED = 201,
   UPDATED_SUCCESSFULLY = 204,

@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/explicit-module-boundary-types */
 
-import { HTTP_STATUS_ERROR_CODES } from "../constants";
+import { HTTP_STATUS_CODES } from "../constants";
 
 export enum errorName {
   ServiceException = "ServiceException",
@@ -61,7 +61,7 @@ export class BaseException {
       this.data = error.data;
       return this
     } catch (e) {
-      throw new BaseException(HTTP_STATUS_ERROR_CODES.INTERNAL_SERVER_ERROR, "InternalServerError", "error when parsing", error);
+      throw new BaseException(HTTP_STATUS_CODES.INTERNAL_SERVER_ERROR, "InternalServerError", "error when parsing", error);
     }
   }
 }
@@ -99,7 +99,7 @@ export class ServiceException extends BaseException {
 export class AuthorizationException extends BaseException {
 
   constructor(type: AuthenticationErrorType, message: string, data?: any) {
-    super(HTTP_STATUS_ERROR_CODES.UNAUTHORIZED, type, message, data);
+    super(HTTP_STATUS_CODES.UNAUTHORIZED, type, message, data);
     this.name = errorName.AuthenticationException;
   }
 

@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
-import { HTTP_STATUS_ERROR_CODES, JWT_SECRET_KEY } from "./constants";
+import { HTTP_STATUS_CODES, JWT_SECRET_KEY } from "./constants";
 import crypto from "crypto";
 import { ValidationException } from "./types/exception";
 
@@ -14,7 +14,7 @@ export const generateBcryptSafePassword = async (password: string): Promise<stri
   if (!password) {
     throw new ValidationException(
       "ValidationError",
-      HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      HTTP_STATUS_CODES.BAD_REQUEST,
       "password must be provided",
     );
   }

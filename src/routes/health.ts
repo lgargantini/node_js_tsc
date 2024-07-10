@@ -1,7 +1,7 @@
 // Health Route
 
 import express from "express";
-import { HTTP_STATUS_ERROR_CODES } from "../utils/constants";
+import { HTTP_STATUS_CODES } from "../utils/constants";
 // BE CAREFUL: initializerModel - flush the database
 // import initializerModel from "../db/models";
 
@@ -20,7 +20,7 @@ const router = express.Router();
  *       200:
  *         description: Returns true if the server is up
  */
-router.get("/", (req, res) => res.status(HTTP_STATUS_ERROR_CODES.OK).send({ status: "UP" }));
+router.get("/", (req, res) => res.status(HTTP_STATUS_CODES.OK).send({ status: "UP" }));
 
 
 
@@ -29,7 +29,7 @@ router.get("/", (req, res) => res.status(HTTP_STATUS_ERROR_CODES.OK).send({ stat
 // router.purge("/_sync/", async (req, res) => {
 //     // Add logic to check if the server is syncing data
 //     await initializerModel();
-//     res.status(HTTP_STATUS_ERROR_CODES.OK).send({ status: "SYNC" })
+//     res.status(HTTP_STATUS_CODES.OK).send({ status: "SYNC" })
 // });
 
 export { router };

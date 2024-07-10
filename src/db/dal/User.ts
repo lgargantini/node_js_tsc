@@ -1,6 +1,6 @@
 import User, { IRole, UserInput, UserOuput } from '../models/User'
 import { ServiceException, ValidationException } from '../../utils/types/exception';
-import { HTTP_STATUS_ERROR_CODES } from '../../utils/constants';
+import { HTTP_STATUS_CODES } from '../../utils/constants';
 import Membership, { MembershipInput } from '../models/Membership';
 
 // Base Handling
@@ -22,11 +22,11 @@ export const getById = async (id: string): Promise<UserOuput> => {
     try {
         const user = await User.findByPk(id)
         if (!user) {
-            throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, "user not found")
+            throw new ValidationException("ValidationError", HTTP_STATUS_CODES.NOT_FOUND, "user not found")
         }
         return user
     } catch (error) {
-        throw new ServiceException("DBError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "error fetching by id", error)
+        throw new ServiceException("DBError", HTTP_STATUS_CODES.BAD_REQUEST, "error fetching by id", error)
     }
 }
 
@@ -48,7 +48,7 @@ export const getAll = async (): Promise<UserOuput[] | Error> => {
         const users = User.findAll()
         return users;
     } catch (e) {
-        throw new ServiceException("DBError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, 'Issue listing users');
+        throw new ServiceException("DBError", HTTP_STATUS_CODES.NOT_FOUND, 'Issue listing users');
     }
 }
 
@@ -57,7 +57,7 @@ export const getAll = async (): Promise<UserOuput[] | Error> => {
 export const createMembership = async (userId: string, membership: MembershipInput): Promise<boolean> => {
     const user: User | null = await User.findOne({ where: { 'id': userId }, include: { model: Membership, as: "memberships" } })
     if (!user) {
-        throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, "user not found")
+        throw new ValidationException("ValidationError", HTTP_STATUS_CODES.NOT_FOUND, "user not found")
     }
     const member = await user.createMembership(membership)
     return !!member
@@ -66,7 +66,7 @@ export const createMembership = async (userId: string, membership: MembershipInp
 export const getMemberships = async (userId: string): Promise<User | null> => {
     const user: User | null = await User.findOne({ where: { 'id': userId }, include: { model: Membership, as: "memberships" } })
     if (!user) {
-        throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, "user not found")
+        throw new ValidationException("ValidationError", HTTP_STATUS_CODES.NOT_FOUND, "user not found")
     }
     return user
 }

@@ -1,6 +1,6 @@
 import express from "express";
 import jwt from "jsonwebtoken";
-import { HTTP_STATUS_ERROR_CODES, JWT_SECRET_KEY } from "../utils/constants";
+import { HTTP_STATUS_CODES, JWT_SECRET_KEY } from "../utils/constants";
 import logger from "../utils/logger";
 import { AuthorizationException, BaseException } from "../utils/types/exception";
 import { handleError } from "../utils/errorHandling";
@@ -26,7 +26,7 @@ export const authenticateUser = async (req: express.Request, res: express.Respon
 
     logger.error('Error authenticating user:', error);
     const defaultError = {
-      status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      status: HTTP_STATUS_CODES.BAD_REQUEST,
       type: "InvalidCredentials",
       message: "Issue authenticating user",
       data: error
