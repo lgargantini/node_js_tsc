@@ -12,7 +12,6 @@ import { HEADER_USER_ID, HTTP_STATUS_ERROR_CODES } from "../../utils/constants";
 import { loginSchema, membershipSchema, resetTokenSchema, userAuthSchema, userEmail, userSchema } from "../../db/validators";
 import { AuthorizationException, BaseException, ValidationException } from "../../utils/types/exception";
 import { handleError } from "../../utils/errorHandling";
-import { MembershipInput } from "../../db/models/Membership";
 
 export const authorizeUser = (requiredRole: IRole) => async (
   req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -378,25 +377,48 @@ usersRouter.delete("/:id", authorizeUser(IRole.ADMIN), async (req: Request, res:
   }
 });
 
-usersRouter.post("/:id/membership", authorizeUser(IRole.ADMIN), async (req: Request, res: Response): Promise<void> => {
+usersRouter.post("/:id/membership", authorizeUser(IRole.USER), async (req: Request, res: Response): Promise<void> => {
   try {
     const isUserValid = userAuthSchema.validate(req.params.id);
     const isBodyValid = membershipSchema.validate(req.body);
     if (isUserValid.error || isBodyValid.error) {
-      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "valid User id must be provided", isUserValid.error || isBodyValid.error)
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "valid body must be provided", isUserValid.error || isBodyValid.error)
     }
-    //create membership
-    const membership: MembershipInput = {
-      ...req.body
-    }
-    await UserController.membership.createMembership(req.params.id, membership);
-    res.status(HTTP_STATUS_ERROR_CODES.UPDATED_SUCCESSFULLY).send();
+    const result = await UserController.membership.createMembership(req.params.id, req.body);
+    res.status(HTTP_STATUS_ERROR_CODES.UPDATED_SUCCESSFULLY).send(result);
   } catch (error) {
     logger.error("Error updating user", error);
     const defaultError = {
       status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
       type: "UnhandledError",
       message: "put user: ",
+      data: error
+    }
+
+    const baseException = new BaseException(
+      defaultError.status,
+      defaultError.type,
+      defaultError.message,
+      defaultError.data
+    ).captureError(error)
+    handleError(baseException, res)
+  }
+});
+
+usersRouter.get("/:id/membership", authorizeUser(IRole.USER), async (req: Request, res: Response): Promise<void> => {
+  try {
+    const isValid = userAuthSchema.validate(req.params.id);
+    if (isValid.error) {
+      throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.BAD_REQUEST, "valid User id must be provided", isValid.error)
+    }
+    const user = await UserController.membership.getMemberships(req.params.id);
+    res.status(HTTP_STATUS_ERROR_CODES.OK).send(user);
+  } catch (error) {
+    logger.error(error);
+    const defaultError = {
+      status: HTTP_STATUS_ERROR_CODES.BAD_REQUEST,
+      type: "UnhandledError",
+      message: "get user by id: ",
       data: error
     }
 

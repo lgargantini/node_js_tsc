@@ -16,6 +16,7 @@ interface MembershipAttributes {
     avatar_url: string;
     avatar_letter: string;
     name: string;
+    enabled?: boolean;
 }
 
 export interface MembershipInput extends Optional<MembershipAttributes, 'id'> { }
@@ -30,7 +31,7 @@ class Membership
     declare avatar_url: string;
     declare avatar_letter: string;
     declare name: string;
-    private declare enabled?: boolean;
+    declare enabled?: boolean;
 }
 
 Membership.init(
@@ -62,6 +63,10 @@ Membership.init(
             type: DataTypes.STRING,
             allowNull: false,
         },
+        enabled: {
+            type: DataTypes.BOOLEAN,
+            defaultValue: true,
+        }
     },
     {
         sequelize: sequelizeConnection,
@@ -76,6 +81,7 @@ User.hasMany(Membership, {
     scope: {
         owner_type: 'user',
     },
+    as: 'memberships',
     constraints: false,
 });
 Membership.belongsTo(User, { foreignKey: 'owner_id', constraints: false });
@@ -85,6 +91,7 @@ Organization.hasMany(Membership, {
     scope: {
         owner_type: 'organization',
     },
+    as: 'memberships',
     constraints: false,
 });
 Membership.belongsTo(Organization, {

@@ -1,7 +1,7 @@
 import User, { IRole, UserInput, UserOuput } from '../models/User'
 import { ServiceException, ValidationException } from '../../utils/types/exception';
 import { HTTP_STATUS_ERROR_CODES } from '../../utils/constants';
-import { MembershipInput } from '../models/Membership';
+import Membership, { MembershipInput } from '../models/Membership';
 
 // Base Handling
 
@@ -55,9 +55,20 @@ export const getAll = async (): Promise<UserOuput[] | Error> => {
 // Membership Handling
 
 export const createMembership = async (userId: string, membership: MembershipInput): Promise<boolean> => {
-    const user = await getById(userId)
-    const member = await (user as User).createMembership(membership)
+    const user: User | null = await User.findOne({ where: { 'id': userId }, include: { model: Membership, as: "memberships" } })
+    if (!user) {
+        throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, "user not found")
+    }
+    const member = await user.createMembership(membership)
     return !!member
+}
+
+export const getMemberships = async (userId: string): Promise<User | null> => {
+    const user: User | null = await User.findOne({ where: { 'id': userId }, include: { model: Membership, as: "memberships" } })
+    if (!user) {
+        throw new ValidationException("ValidationError", HTTP_STATUS_ERROR_CODES.NOT_FOUND, "user not found")
+    }
+    return user
 }
 
 export default {
@@ -69,6 +80,7 @@ export default {
     deleteById,
     membership: {
         createMembership,
+        getMemberships,
     }
 }
 

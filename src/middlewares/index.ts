@@ -5,21 +5,6 @@ import logger from "../utils/logger";
 import { AuthorizationException, BaseException } from "../utils/types/exception";
 import { handleError } from "../utils/errorHandling";
 
-export async function middlewareAuthorization(
-  req: express.Request,
-  res: express.Response,
-  next: express.NextFunction,
-) {
-  logger.info(
-    `authorizeServiceTokenOrUserClaim: checking for either a service token or user claims`,
-  );
-
-  if (req.headers["user-id"]) {
-    next();
-    return;
-  }
-};
-
 export const authenticateUser = async (req: express.Request, res: express.Response, next: express.NextFunction) => {
   try {
     const token = req?.headers?.authorization?.split(' ')[1];
